@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title id="pageTitle">QuickBoard • Real-Time Clipboard</title>
+  <link rel="icon" id="pageFavicon" type="image/svg+xml" href="favicon.svg">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Drag & Drop Fullscreen Overlay -->
+  <div id="dragDropOverlay" class="drag-drop-overlay hidden">
+    <div class="drag-drop-box">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <h3>Drop Image to Send</h3>
+      <p>Will be shared instantly on the board</p>
+    </div>
+  </div>
+
+  <div id="appContainer" class="app-container">
+    <!-- Active Board -->
+    <div id="roomView" class="view room-view">
+      <!-- Header Bar -->
+      <header class="board-header">
+        <div class="header-left">
+          <div class="brand-badge" id="brandBadge">
+            <span class="brand-dot"></span>
+            <span class="brand-text" id="brandText">QuickBoard</span>
+          </div>
+
+          <!-- Status Indicator Pill -->
+          <div id="statusIndicator" class="status-pill status-connected" title="QuickBoard is Live">
+            <span class="status-indicator-dot"></span>
+            <span id="statusText">Live • Ready</span>
+          </div>
+
+          <!-- Role Selector: You (Host) or Friend -->
+          <div class="role-selector" id="roleSelector" title="Select your role">
+            <span class="role-label">I am:</span>
+            <div class="role-switch">
+              <button type="button" class="btn-role active" id="btnRoleYou" data-role="You">👤 Host (You)</button>
+              <button type="button" class="btn-role" id="btnRoleFriend" data-role="Friend">👥 Friend</button>
+            </div>
+          </div>
+
+          <!-- 10-Friend 1-on-1 Channel Selector -->
+          <div class="friend-picker" id="friendPicker">
+            <span class="picker-label" id="pickerLabel">Friend:</span>
+            <select id="friendSelect" class="friend-dropdown" title="Select one friend to connect">
+              <option value="1">👥 1. Friend 1</option>
+              <option value="2">👥 2. Friend 2</option>
+              <option value="3">👥 3. Friend 3</option>
+              <option value="4">👥 4. Friend 4</option>
+              <option value="5">👥 5. Friend 5</option>
+              <option value="6">👥 6. Friend 6</option>
+              <option value="7">👥 7. Friend 7</option>
+              <option value="8">👥 8. Friend 8</option>
+              <option value="9">👥 9. Friend 9</option>
+              <option value="10">👥 10. Friend 10</option>
+            </select>
+          </div>
+
+          <!-- Name Input Box: sets Friend's custom name -->
+          <div class="name-box" id="nameBox" title="Set or rename friend's display name">
+            <span class="name-label" id="nameLabel">Friend Name:</span>
+            <input type="text" id="userNameInput" class="user-name-input" placeholder="e.g. Rahul" maxlength="24" spellcheck="false" autocomplete="off">
+          </div>
+
+          <!-- Share / Copy Direct Link for this Friend -->
+          <button type="button" id="btnShareLink" class="btn-share-link" title="Copy direct link for this friend">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <span class="share-btn-label">Share Link</span>
+          </button>
+        </div>
+
+        <!-- Header Controls / Sync Toggles -->
+        <div class="header-right">
+          <!-- Auto-Copy Incoming Toggle -->
+          <button id="btnToggleAutoCopy" class="btn-toolbar toggle-active" title="Automatically copy incoming messages from friend to your clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span class="toolbar-label">Auto-Copy to My Clipboard: <strong>ON</strong></span>
+          </button>
+
+          <!-- Auto-Sync on Tab Focus -->
+          <button id="btnToggleAutoFocus" class="btn-toolbar toggle-active" title="Auto-send newly copied text when switching back to this tab">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span class="toolbar-label">Auto-Paste on Focus: <strong>ON</strong></span>
+          </button>
+
+          <!-- Clear Board -->
+          <button id="btnClearBoard" class="btn-toolbar btn-danger-hover" title="Clear All Board Items">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <span class="toolbar-label">Clear</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Chronological Board Feed -->
+      <main id="boardFeed" class="board-feed">
+        <!-- Empty State Placeholder -->
+        <div id="boardEmptyState" class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <h3>Shared Board Ready</h3>
+          <p>Any text, code, or screenshot sent here updates immediately across all connected browsers.</p>
+          <div class="empty-tips">
+            <span class="tip-chip">⚡ Copy in ChatGPT -> Click tab -> Auto-posts</span>
+            <span class="tip-chip">📥 Friend sends text -> Automatically in your clipboard</span>
+            <span class="tip-chip">📸 Press <code>Ctrl+V</code> for screenshots</span>
+          </div>
+        </div>
+
+        <!-- Messages Container -->
+        <div id="messageList" class="message-list"></div>
+      </main>
+
+      <!-- Bottom Input & Attachment Bar -->
+      <footer class="board-footer">
+        <!-- Pending Attachment Preview Banner -->
+        <div id="pendingAttachment" class="pending-attachment hidden">
+          <div class="attachment-preview">
+            <img id="attachmentThumbnail" src="" alt="Pending Screenshot">
+            <div class="attachment-info">
+              <span id="attachmentName" class="attachment-name">screenshot.png</span>
+              <span id="attachmentSize" class="attachment-size">0 KB</span>
+            </div>
+          </div>
+          <div class="attachment-actions">
+            <button id="btnCancelAttachment" class="btn btn-sm btn-subtle">Cancel</button>
+            <button id="btnSendAttachment" class="btn btn-sm btn-primary">Send Image</button>
+          </div>
+        </div>
+
+        <!-- Input Area Form -->
+        <form id="messageForm" class="message-form">
+          <!-- Hidden file input for image upload -->
+          <input type="file" id="imageFileInput" accept="image/*" class="hidden">
+
+          <div class="input-controls-left">
+            <!-- 1-Click Pull from Clipboard -->
+            <button type="button" id="btnPullClipboard" class="btn btn-sm btn-primary btn-pull-clip" title="Read current clipboard and send immediately">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              </svg>
+              <span>Paste Clipboard</span>
+            </button>
+
+            <button type="button" id="btnUploadImage" class="btn-input-icon" title="Upload Image / Screenshot">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="textarea-container">
+            <textarea 
+              id="messageInput" 
+              placeholder="Paste text, code, or press Ctrl+V for screenshot... (Enter to send)" 
+              rows="1"
+              spellcheck="false"
+            ></textarea>
+          </div>
+
+          <div class="input-controls-right">
+            <button type="submit" id="btnSendMessage" class="btn btn-send" title="Send (Enter or Ctrl+Enter)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+
+        <div class="footer-hint">
+          <span>Tip: Click <strong>Paste Clipboard</strong> or press <strong>Ctrl+V</strong> to post directly. Incoming messages auto-copy to your clipboard!</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Lightbox Modal for Full Size Image Viewing -->
+  <div id="imageLightbox" class="lightbox-modal hidden">
+    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+    <div class="lightbox-content">
+      <div class="lightbox-header">
+        <span id="lightboxTitle" class="lightbox-title">Image Preview</span>
+        <div class="lightbox-actions">
+          <button id="btnLightboxCopy" class="btn btn-sm btn-subtle" title="Copy Image to Clipboard">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy Image
+          </button>
+          <button id="btnLightboxDownload" class="btn btn-sm btn-subtle" title="Download Image">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Save
+          </button>
+          <button id="btnLightboxClose" class="btn-icon-subtle" title="Close (Esc)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="lightbox-image-wrap">
+        <img id="lightboxImage" src="" alt="Full view">
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
