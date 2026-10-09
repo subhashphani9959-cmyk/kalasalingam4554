@@ -243,6 +243,84 @@
     </div>
   </div>
 
+  <!-- Share / Connect Modal -->
+  <div id="shareModal" class="share-modal hidden">
+    <div class="share-backdrop" id="shareBackdrop"></div>
+    <div class="share-dialog">
+      <div class="share-dialog-header">
+        <div class="share-title-group">
+          <span class="share-icon">🔗</span>
+          <div>
+            <h3 class="share-title" id="shareModalTitle">Connect with Friend</h3>
+            <p class="share-subtitle">Send this direct link to your friend so they connect to your board automatically.</p>
+          </div>
+        </div>
+        <button type="button" id="btnShareModalClose" class="btn-icon-subtle" title="Close (Esc)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="share-dialog-body">
+        <!-- 1. Public Internet Link (Cloudflare Tunnel / Remote) -->
+        <div class="share-card share-card-public" id="shareCardPublic">
+          <div class="share-card-header">
+            <div class="share-card-title">
+              <span class="share-badge share-badge-public">🌐 Recommended for Remote Friends</span>
+              <strong>Public Internet Link</strong>
+            </div>
+            <span class="share-card-desc">Works anywhere worldwide (home, mobile data, different Wi-Fi networks).</span>
+          </div>
+          <div class="share-input-row">
+            <input type="text" id="shareUrlPublic" readonly class="share-url-input" placeholder="Generating Cloudflare Tunnel link...">
+            <button type="button" class="btn btn-primary btn-copy-share" id="btnCopyPublic">
+              <span>Copy Link</span>
+            </button>
+          </div>
+          <div class="share-tip" id="sharePublicTip">
+            <span>Keep <code>npm run all</code> or <code>npm run tunnel</code> running to keep this public link active.</span>
+          </div>
+        </div>
+
+        <!-- 2. Local Wi-Fi Network Link -->
+        <div class="share-card" id="shareCardNetwork">
+          <div class="share-card-header">
+            <div class="share-card-title">
+              <span class="share-badge share-badge-network">📶 Same Wi-Fi Network</span>
+              <strong>Local Wi-Fi Link</strong>
+            </div>
+            <span class="share-card-desc">For phones, laptops, or tablets connected to your same Wi-Fi router.</span>
+          </div>
+          <div class="share-input-row">
+            <input type="text" id="shareUrlNetwork" readonly class="share-url-input" placeholder="http://10.x.x.x:3000/...">
+            <button type="button" class="btn btn-subtle btn-copy-share" id="btnCopyNetwork">
+              <span>Copy Link</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Localhost (Same PC) Link -->
+        <div class="share-card" id="shareCardLocal">
+          <div class="share-card-header">
+            <div class="share-card-title">
+              <span class="share-badge share-badge-local">💻 This Computer Only</span>
+              <strong>Localhost Link</strong>
+            </div>
+            <span class="share-card-desc">Only works inside another browser tab on this exact machine. (Do NOT send to friends on other devices!)</span>
+          </div>
+          <div class="share-input-row">
+            <input type="text" id="shareUrlLocal" readonly class="share-url-input" placeholder="http://localhost:3000/...">
+            <button type="button" class="btn btn-subtle btn-copy-share" id="btnCopyLocal">
+              <span>Copy Link</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 

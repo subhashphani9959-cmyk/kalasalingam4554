@@ -120,13 +120,26 @@ function getChannelStatus(friendId) {
   };
 }
 
+// Helper to get active Cloudflare tunnel URL if running
+function getTunnelUrl() {
+  try {
+    const tunnelPath = path.join(DATA_DIR, 'tunnel.json');
+    if (fs.existsSync(tunnelPath)) {
+      const data = JSON.parse(fs.readFileSync(tunnelPath, 'utf8'));
+      if (data && data.url) return data.url;
+    }
+  } catch (e) {}
+  return process.env.PUBLIC_URL || null;
+}
+
 // Network info endpoint
 app.get('/api/info', (req, res) => {
   res.json({
     localIp: getLocalIp(),
     port: PORT,
     totalChannels: 10,
-    channelNames: getChannelNames()
+    channelNames: getChannelNames(),
+    tunnelUrl: getTunnelUrl()
   });
 });
 
@@ -135,6 +148,13 @@ io.on('connection', (socket) => {
   let currentChannelId = null;
   let currentRole = 'You';
   let currentUserName = '';
+
+  // Broadcast network info to client on connection
+  socket.emit('network-info', {
+    localIp: getLocalIp(),
+    port: PORT,
+    tunnelUrl: getTunnelUrl()
+  });
 
   // Client selects friend channel (1 to 10) and role ('You' or 'Friend')
   socket.on('select-channel', ({ friendId, role, customName, isDaemon }, callback) => {

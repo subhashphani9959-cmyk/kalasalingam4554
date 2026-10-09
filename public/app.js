@@ -51,6 +51,40 @@
 
   const toastContainer = document.getElementById('toastContainer');
 
+  // Share / Connect Modal Elements
+  const shareModal = document.getElementById('shareModal');
+  const shareBackdrop = document.getElementById('shareBackdrop');
+  const btnShareModalClose = document.getElementById('btnShareModalClose');
+  const shareModalTitle = document.getElementById('shareModalTitle');
+  const shareUrlPublic = document.getElementById('shareUrlPublic');
+  const shareUrlNetwork = document.getElementById('shareUrlNetwork');
+  const shareUrlLocal = document.getElementById('shareUrlLocal');
+  const btnCopyPublic = document.getElementById('btnCopyPublic');
+  const btnCopyNetwork = document.getElementById('btnCopyNetwork');
+  const btnCopyLocal = document.getElementById('btnCopyLocal');
+  const sharePublicTip = document.getElementById('sharePublicTip');
+
+  let serverNetworkInfo = {
+    localIp: window.location.hostname || 'localhost',
+    port: window.location.port || '3000',
+    tunnelUrl: null
+  };
+
+  async function fetchNetworkInfo() {
+    try {
+      const res = await fetch('/api/info');
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          serverNetworkInfo = Object.assign(serverNetworkInfo, data);
+          if (data.channelNames) updateChannelNamesDropdown(data.channelNames);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch /api/info:', e);
+    }
+  }
+
   // --- Parse URL Parameters (Direct Friend Links) ---
   const urlParams = new URLSearchParams(window.location.search);
   const paramFriend = urlParams.get('friend') || urlParams.get('channel') || urlParams.get('id');
@@ -102,6 +136,12 @@
 
     socket.on('disconnect', () => {
       updateStatusBadge('disconnected', 'Disconnected. Reconnecting...');
+    });
+
+    socket.on('network-info', (info) => {
+      if (info) {
+        serverNetworkInfo = Object.assign(serverNetworkInfo, info);
+      }
     });
 
     socket.on('channel-status', (status) => {
@@ -593,6 +633,25 @@
     imageFileInput.value = '';
   }
 
+  // --- Link Detection & Formatting Helper ---
+  function linkifyText(text) {
+    if (!text) return '';
+    const escaped = escapeHtml(text);
+    // Regex for matching http, https, and www URLs
+    const urlPattern = /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,:;"')\]])/gi;
+    return escaped.replace(urlPattern, (match) => {
+      const href = match.toLowerCase().startsWith('www.') ? `https://${match}` : match;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="message-link" title="Open ${href}">${match}</a>`;
+    });
+  }
+
+  function extractFirstUrl(text) {
+    if (!text) return null;
+    const match = text.match(/\b(https?:\/\/[^\s<]+|www\.[^\s<]+)/i);
+    if (!match) return null;
+    return match[0].toLowerCase().startsWith('www.') ? `https://${match[0]}` : match[0];
+  }
+
   // --- Message Rendering & Actions ---
   function renderMessage(msg) {
     boardEmptyState.classList.add('hidden');
@@ -627,6 +686,18 @@
     item.id = msg.id;
 
     if (msg.type === 'text') {
+      const firstUrl = extractFirstUrl(msg.content);
+      const openBtnHtml = firstUrl ? `
+        <a href="${firstUrl}" target="_blank" rel="noopener noreferrer" class="btn-action btn-open-link" title="Open link in new tab">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+          <span>Open Link</span>
+        </a>
+      ` : '';
+
       item.innerHTML = `
         <div class="message-meta">
           <div class="sender-tag ${badgeClass}">
@@ -635,9 +706,10 @@
           <span class="message-time">${timeFormatted}</span>
         </div>
         <div class="message-content-text">
-          <pre class="message-text">${escapeHtml(msg.content)}</pre>
+          <pre class="message-text">${linkifyText(msg.content)}</pre>
         </div>
         <div class="message-actions">
+          ${openBtnHtml}
           <button class="btn-action btn-copy-text" title="Copy text to clipboard">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
@@ -875,8 +947,11 @@
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (!imageLightbox.classList.contains('hidden')) {
+        if (imageLightbox && !imageLightbox.classList.contains('hidden')) {
           closeLightbox();
+        }
+        if (shareModal && !shareModal.classList.contains('hidden')) {
+          closeShareModal();
         }
       }
     });
@@ -1031,19 +1106,97 @@
       });
     }
 
+    // Open Share & Connect Modal
+    async function openShareModal() {
+      await fetchNetworkInfo();
+      const friendName = channelNames[currentFriendId] || `Friend ${currentFriendId}`;
+      if (shareModalTitle) {
+        shareModalTitle.textContent = `Connect with ${friendName} (Slot ${currentFriendId})`;
+      }
+
+      const pathQuery = `/?friend=${currentFriendId}&role=friend`;
+
+      // 1. Determine Public / Internet URL
+      let publicUrl = '';
+      if (serverNetworkInfo.tunnelUrl) {
+        publicUrl = `${serverNetworkInfo.tunnelUrl.replace(/\/$/, '')}${pathQuery}`;
+      } else if (
+        window.location.origin.includes('trycloudflare.com') ||
+        window.location.origin.includes('onrender.com') ||
+        (!window.location.hostname.includes('localhost') &&
+          !window.location.hostname.startsWith('10.') &&
+          !window.location.hostname.startsWith('192.168.') &&
+          !window.location.hostname.startsWith('172.') &&
+          window.location.hostname !== '127.0.0.1')
+      ) {
+        publicUrl = `${window.location.origin}${pathQuery}`;
+      }
+
+      // 2. Wi-Fi Local Network URL
+      const networkHost = serverNetworkInfo.localIp || window.location.hostname;
+      const portStr = serverNetworkInfo.port ? `:${serverNetworkInfo.port}` : '';
+      const networkUrl = `http://${networkHost}${portStr}${pathQuery}`;
+
+      // 3. Localhost URL
+      const localUrl = `http://localhost:${serverNetworkInfo.port || 3000}${pathQuery}`;
+
+      if (shareUrlPublic) {
+        if (publicUrl) {
+          shareUrlPublic.value = publicUrl;
+        } else {
+          shareUrlPublic.value = 'Start tunnel with: npm run tunnel';
+        }
+      }
+      if (shareUrlNetwork) shareUrlNetwork.value = networkUrl;
+      if (shareUrlLocal) shareUrlLocal.value = localUrl;
+
+      if (shareModal) shareModal.classList.remove('hidden');
+
+      // Automatically copy the best working link immediately!
+      const bestUrl = publicUrl || networkUrl;
+      try {
+        await navigator.clipboard.writeText(bestUrl);
+        const urlType = publicUrl ? 'Public Internet' : 'Local Wi-Fi';
+        showToast(`🔗 Copied ${urlType} link for ${friendName}!`, 'success');
+      } catch (e) {}
+    }
+
+    function closeShareModal() {
+      if (shareModal) shareModal.classList.add('hidden');
+    }
+
     if (btnShareLink) {
-      btnShareLink.addEventListener('click', async () => {
-        const friendName = channelNames[currentFriendId] || `Friend ${currentFriendId}`;
-        const base = window.location.origin;
-        const url = `${base}/?friend=${currentFriendId}&role=friend`;
-        try {
-          await navigator.clipboard.writeText(url);
-          showToast(`🔗 Copied direct link for ${friendName}! Send to your friend.`, 'success');
-        } catch (e) {
-          prompt(`Copy link for ${friendName}:`, url);
+      btnShareLink.addEventListener('click', openShareModal);
+    }
+
+    if (btnCopyPublic) {
+      btnCopyPublic.addEventListener('click', async () => {
+        const val = shareUrlPublic.value;
+        if (val && val.startsWith('http')) {
+          await copyTextToClipboard(val, btnCopyPublic);
+          showToast('🔗 Public Internet link copied!', 'success');
+        } else {
+          showToast('Tip: Run npm run tunnel to generate a public link!', 'info');
         }
       });
     }
+
+    if (btnCopyNetwork) {
+      btnCopyNetwork.addEventListener('click', async () => {
+        await copyTextToClipboard(shareUrlNetwork.value, btnCopyNetwork);
+        showToast('📶 Local Wi-Fi link copied!', 'success');
+      });
+    }
+
+    if (btnCopyLocal) {
+      btnCopyLocal.addEventListener('click', async () => {
+        await copyTextToClipboard(shareUrlLocal.value, btnCopyLocal);
+        showToast('💻 Localhost link copied! (For this PC only)', 'info');
+      });
+    }
+
+    if (btnShareModalClose) btnShareModalClose.addEventListener('click', closeShareModal);
+    if (shareBackdrop) shareBackdrop.addEventListener('click', closeShareModal);
 
     btnToggleAutoCopy.addEventListener('click', () => {
       autoCopyIncoming = !autoCopyIncoming;
@@ -1100,7 +1253,8 @@
     });
   }
 
-  function init() {
+  async function init() {
+    await fetchNetworkInfo();
     switchChannel(currentFriendId, currentRole);
     initSocket();
     setupClipboardAndKeyboardListeners();

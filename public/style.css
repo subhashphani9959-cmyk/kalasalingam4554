@@ -1419,3 +1419,225 @@ html, body {
     left: 16px;
   }
 }
+
+/* ==========================================================================
+   Clickable Message Links & Open Button
+   ========================================================================== */
+.message-link {
+  color: #818cf8;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  word-break: break-all;
+  transition: color 0.15s ease;
+}
+
+.message-link:hover {
+  color: #a5b4fc;
+}
+
+.btn-open-link {
+  color: #818cf8 !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-open-link:hover {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #c7d2fe !important;
+}
+
+/* ==========================================================================
+   Share / Connect Modal
+   ========================================================================== */
+.share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.share-modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.share-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 7, 12, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.share-dialog {
+  position: relative;
+  z-index: 10;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.share-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.share-title-group {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.share-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.share-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.share-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.share-dialog-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.share-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.share-card-public {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(31, 36, 58, 0.6) 100%);
+}
+
+.share-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.share-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.share-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.share-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.03em;
+}
+
+.share-badge-public {
+  background: var(--primary-light);
+  color: #a5b4fc;
+}
+
+.share-badge-network {
+  background: var(--emerald-bg);
+  color: var(--emerald);
+}
+
+.share-badge-local {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted);
+}
+
+.share-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.share-url-input {
+  flex: 1;
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  outline: none;
+  cursor: text;
+}
+
+.share-url-input:focus {
+  border-color: var(--border-focus);
+}
+
+.btn-copy-share {
+  white-space: nowrap;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+}
+
+.share-tip {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.share-tip code {
+  background: var(--bg-main);
+  color: #a5b4fc;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+

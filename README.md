@@ -65,25 +65,26 @@ The server will output:
 
 ---
 
-## 🌐 Sharing Over the Internet (Remote Friends)
+## 🌐 Sharing with Friends (Internet & Wi-Fi)
 
-If your friend is in a different location (different Wi-Fi network), you can expose your local server securely using any free tunneling tool:
-
-### Option A: LocalTunnel (No account needed)
+### 1-Click All-in-One Launch (Server + Sync + Cloudflare Tunnel)
 ```bash
-npx localtunnel --port 3000
+npm run all
 ```
-Gives you a public URL (e.g., `https://cold-fox-82.loca.lt`) to share with your friend.
+This single command automatically starts:
+1. The **QuickBoard Web Server** on port 3000
+2. The **Windows Clipboard Sync Daemon** (for instant Ctrl+C / Ctrl+V sync)
+3. The **Cloudflare Public Tunnel** (generates a live public URL for remote friends)
 
-### Option B: Cloudflare Tunnel (Free, fast, no account needed)
-```bash
-npx cloudflared tunnel --url http://localhost:3000
-```
+### Standalone Commands:
+- **Server only**: `npm start`
+- **Clipboard Sync Daemon only**: `npm run sync`
+- **Cloudflare Public Tunnel only**: `npm run tunnel`
 
-### Option C: Ngrok
-```bash
-ngrok http 3000
-```
+### Which link should you share?
+- **Remote Friend (Anywhere in the world)**: Share the **Cloudflare Public URL** (e.g., `https://xxxx.trycloudflare.com/?friend=1&role=friend`).
+- **Same Wi-Fi Router (Phone / Laptop)**: Share the **Network URL** (e.g., `http://10.2.5.79:3000/?friend=1&role=friend`).
+- **Do NOT share `localhost`**: `http://localhost:3000` only exists inside your own computer and will never work on your friend's device! Click the **🔗 Share Link** button inside the app to see and copy the right link with 1 click.
 
 ---
 

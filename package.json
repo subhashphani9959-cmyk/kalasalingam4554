@@ -2,10 +2,11 @@
   "name": "clipboard",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "sync": "node sync.js",
+    "tunnel": "node scripts/tunnel.js",
     "all": "node start-all.js",
     "dev": "node server.js"
   },
